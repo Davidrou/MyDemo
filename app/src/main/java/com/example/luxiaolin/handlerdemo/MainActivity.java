@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import com.example.luxiaolin.handlerdemo.network.MyNetApi;
 import com.example.luxiaolin.handlerdemo.network.bean.Translation;
+import com.example.luxiaolin.handlerdemo.network.bean.Translation2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -417,6 +418,47 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete() {
                         Log.d(TAG, "对Complete事件作出响应");
+                    }
+                });
+    }
+
+    public void translateOneByOne(){
+        Observable<Translation> observable = MyNetApi.getInterface().translate();
+        Observable<Translation2> observable2 = MyNetApi.getInterface().translate2();
+        observable
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new Consumer<Translation>() {
+                    @Override
+                    public void accept(Translation translation) throws Exception {
+                        Toast.makeText(getApplicationContext(), "accept " + translation.content.out, 0).show();
+                    }
+                })
+                .map(new Function<Translation, Translation2>() {
+                    @Override
+                    public Translation2 apply(Translation translation) throws Exception {
+                        return null;
+                    }
+                })
+                .subscribe(new Observer<Translation2>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Translation2 translation) {
+                        Toast.makeText(getApplicationContext(), "onNext " + translation.content.out, 0).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
                     }
                 });
     }

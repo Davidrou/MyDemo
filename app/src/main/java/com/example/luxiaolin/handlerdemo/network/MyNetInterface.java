@@ -1,6 +1,7 @@
 package com.example.luxiaolin.handlerdemo.network;
 
 import com.example.luxiaolin.handlerdemo.network.bean.Translation;
+import com.example.luxiaolin.handlerdemo.network.bean.Translation2;
 
 import io.reactivex.Observable;
 import retrofit2.http.GET;
@@ -23,5 +24,8 @@ public interface MyNetInterface {
     @GET("ajax.php?a=fy&f=auto&t=auto&w=hello%20world")
     Observable<Translation> translate();
 
+
+    @GET("ajax.php?a=fy&f=auto&t=auto&w=hello%20world")
+    Observable<Translation2> translate2();
 
 }
