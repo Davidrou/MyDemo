@@ -7,8 +7,8 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
+            <option value="/media/luozhanwei/disk/MyDemo" />
+            <option value="/media/luozhanwei/disk/MyDemo/app" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
