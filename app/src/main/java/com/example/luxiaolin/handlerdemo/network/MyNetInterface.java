@@ -25,7 +25,7 @@ public interface MyNetInterface {
     Observable<Translation> translate();
 
 
-    @GET("ajax.php?a=fy&f=auto&t=auto&w=hello%20world")
+    @GET("ajax.php?a=fy&f=auto&t=auto&w=reactive%20java")
     Observable<Translation2> translate2();
 
 }

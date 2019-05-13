@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                translateIntervel();
+                testSubscribe();
             }
         });
     }
@@ -422,9 +422,9 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void translateOneByOne(){
+    public void translateOneByOne() {
         Observable<Translation> observable = MyNetApi.getInterface().translate();
-        Observable<Translation2> observable2 = MyNetApi.getInterface().translate2();
+        final Observable<Translation2> observable2 = MyNetApi.getInterface().translate2();
         observable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -434,12 +434,17 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "accept " + translation.content.out, 0).show();
                     }
                 })
-                .map(new Function<Translation, Translation2>() {
+                // （新被观察者，同时也是新观察者）切换到IO线程去发起登录请求
+                // 特别注意：因为flatMap是对初始被观察者作变换，所以对于旧被观察者，它是新观察者，所以通过observeOn切换线程
+                // 但对于初始观察者，它则是新的被观察者
+                .observeOn(Schedulers.io())
+                .flatMap(new Function<Translation, Observable<Translation2>>() {// 作变换，即作嵌套网络请求,为什么使用map不行呢？
                     @Override
-                    public Translation2 apply(Translation translation) throws Exception {
-                        return null;
+                    public Observable<Translation2> apply(Translation translation) throws Exception {
+                        return observable2;
                     }
                 })
+                .observeOn(AndroidSchedulers.mainThread()) // （初始观察者）切换到主线程 处理网络请求2的结果
                 .subscribe(new Observer<Translation2>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -447,8 +452,90 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onNext(Translation2 translation) {
-                        Toast.makeText(getApplicationContext(), "onNext " + translation.content.out, 0).show();
+                    public void onNext(Translation2 translation2) {
+                        Log.d(TAG, "onNext " + translation2.content.out);
+                        Toast.makeText(getApplicationContext(), "onNext " + translation2.content.out, 0).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "on Error:" + e.getMessage(), e);
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+    }
+
+    public void testSubscribe() {
+        /**
+         * 1 observeOn修改的是他 下面 的代码执行的线程
+         subscribeOn修改的是他 上面 执行代码的线程
+         2 observeOn之后在调用observeOn还可以修改线程，但是调用subscribeOn就不能再修改线程
+         */
+        Observable
+                .create(new ObservableOnSubscribe<String>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<String> emitter) throws Exception {
+                        emitter.onNext("1");
+                        emitter.onNext("2");
+                        emitter.onNext("3");
+                        Log.d(TAG, "subscribe " + Thread.currentThread());
+                        emitter.onComplete();
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<String>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        Log.d(TAG, "onSubscribe");
+                    }
+
+                    @Override
+                    public void onNext(String s) {
+                        Log.d(TAG, "onNext " + s + " " + Thread.currentThread());
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.d(TAG, "onError");
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "onComplete");
+                    }
+                });
+    }
+
+    public void testMap() {
+        Observable
+                .create(new ObservableOnSubscribe<String>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<String> emitter) throws Exception {
+                        emitter.onNext("1");
+                        Log.d(TAG, "subscribe " + Thread.currentThread());
+                        emitter.onComplete();
+                    }
+                })
+                .map(new Function<String, Integer>() {
+                    @Override
+                    public Integer apply(String s) throws Exception {
+                        return Integer.parseInt(s);
+                    }
+                })
+                .subscribe(new Observer<Integer>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(Integer integer) {
+
                     }
 
                     @Override
@@ -462,4 +549,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+
 }
